@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>कैटलॉग</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        * { font-family: 'Poppins', sans-serif; }
+        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 pb-20">
+    
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto">
+            <h1 class="text-xl font-bold" id="shopName">दुकान</h1>
+            <p class="text-sm" id="shopPhone">📞 9876543210</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 max-w-2xl">
+        <div id="productsGrid" class="grid grid-cols-2 gap-3"></div>
+    </div>
+
+    <div class="sticky-bar p-3">
+        <div class="container mx-auto max-w-2xl">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-gray-600">आइटम: <span id="totalItems" class="font-bold">0</span></p>
+                    <p class="text-base font-bold text-green-600">₹<span id="grandTotal">0</span></p>
+                </div>
+                <button onclick="placeOrder()" class="bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm">
+                    <i class="fab fa-whatsapp"></i> ऑर्डर
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let orderItems = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shopData = JSON.parse(atob(urlParams.get('shop') || '{}'));
+            products = JSON.parse(atob(urlParams.get('products') || '[]'));
+            
+            document.getElementById('shopName').textContent = shopData.shopName || 'दुकान';
+            document.getElementById('shopPhone').textContent = `📞 ${shopData.phone || 'N/A'}`;
+            
+            loadProducts();
+        });
+
+        function loadProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = products.map(p => `
+                <div class="bg-white rounded-lg shadow p-2">
+                    <img src="${p.image}" class="w-full h-24 object-cover rounded mb-2">
+                    <h3 class="font-semibold text-xs">${p.title}</h3>
+                    <p class="text-xs text-gray-600 mb-1">${p.category}</p>
+                    <p class="text-base font-bold text-green-600">₹${p.retailPrice || p.wholesalePrice || 0}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <button onclick="updateQuantity(${p.id}, -1)" class="bg-gray-200 w-7 h-7 rounded-full text-sm font-bold">-</button>
+                        <span id="qty-${p.id}" class="font-bold text-sm">0</span>
+                        <button onclick="updateQuantity(${p.id}, 1)" class="bg-blue-500 text-white w-7 h-7 rounded-full text-sm font-bold">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateQuantity(productId, change) {
+            if (!orderItems[productId]) orderItems[productId] = 0;
+            orderItems[productId] = Math.max(0, orderItems[productId] + change);
+            document.getElementById(`qty-${productId}`).textContent = orderItems[productId];
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let totalItems = 0;
+            let grandTotal = 0;
+            
+            Object.keys(orderItems).forEach(id => {
+                const qty = orderItems[id];
+                const product = products.find(p => p.id == id);
+                if (qty > 0 && product) {
+                    totalItems += qty;
+                    grandTotal += qty * (product.retailPrice || product.wholesalePrice || 0);
+                }
+            });
+            
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('grandTotal').textContent = grandTotal;
+        }
+
+        function placeOrder() {
+            const orderLines = [];
+            Object.keys(orderItems).forEach(id => {
+                const qty = orderItems[id];
+                const product = products.find(p => p.id == id);
+                if (qty > 0 && product) {
+                    const price = product.retailPrice || product.wholesalePrice || 0;
+                    orderLines.push(`• ${product.title} - ${qty} x ₹${price} = ₹${qty * price}`);
+                }
+            });
+            
+            if (orderLines.length === 0) {
+                alert('कम से कम एक प्रोडक्ट चुनें');
+                return;
+            }
+            
+            const message = `🏪 *${document.getElementById('shopName').textContent}*\n${document.getElementById('shopPhone').textContent}\n---------------------------------\n📦 *ऑर्डर:*\n${orderLines.join('\n')}\n---------------------------------\n💰 *कुल: ₹${document.getElementById('grandTotal').textContent}*`;
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
