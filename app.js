@@ -1,5 +1,5 @@
 // ⚠️ IMPORTANT: Apni Gemini API Key Yahan Paste Karo
-const GEMINI_API_KEY = "AQ.Ab8RN6J6FCcy1jo390-wJJaNzVPBk1Z5ItPqhyDxc4cTll8s9A"; // <-- Yahan apni key dalo
+const GEMINI_API_KEY = "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"; // <-- Yahan apni key dalo
 
 let uploadedPhotos = [];
 let currentProduct = {};
